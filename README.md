@@ -143,3 +143,28 @@ envtoggle -k DEBUG,VERBOSE | source /dev/stdin
 - Enter to confirm selection
 - Shows current state of variables based on environment
 - Displays total number of keys being managed
+
+# livephoto
+
+`livephoto` - Move all videos in a directory to a "Live Photos" subdirectory and clean up empty directories.
+
+### Installation
+
+```sh
+go install github.com/dynonguyen/dyno-clis/cmd/livephoto@latest
+```
+
+### Usage
+
+```sh
+livephoto -p /path/to/directory
+
+# OR use current directory
+livephoto
+```
+
+### Options
+
+- `-p, --path`: Path to the directory to clean up (default: current directory)
+- `-k, --keepEmptyDirs`: Keep empty directories after moving files (default: false)
+- `-n, --livephotosName`: Name of the live photos directory (default: "Live Photos")
