@@ -7,16 +7,17 @@ import (
 )
 
 type FlagItem struct {
-	Name, Desc string
-	Required   bool
-	Flags      []string
-	StrVal     *string
-	BoolVal    *bool
-	IntVal     *int
-	DefaultVal any
+	Name, Desc  string
+	Required    bool
+	Flags       []string
+	StrVal      *string
+	BoolVal     *bool
+	IntVal      *int
+	SliceStrVal []string
+	DefaultVal  any
 }
 
-func (fi *FlagItem) ParseFlag() {
+func (fi *FlagItem) parseFlag() {
 	for _, flagName := range fi.Flags {
 		switch {
 		case fi.StrVal != nil:
@@ -43,7 +44,7 @@ func (fi *FlagItem) ParseFlag() {
 
 func ParseFlags(items []FlagItem, example string) {
 	for _, item := range items {
-		item.ParseFlag()
+		item.parseFlag()
 	}
 
 	flag.Usage = func() {
@@ -56,7 +57,7 @@ func ParseFlags(items []FlagItem, example string) {
 			}
 
 			defaultVal := ""
-			if item.DefaultVal != nil {
+			if item.DefaultVal != nil && item.DefaultVal != "" {
 				defaultVal = fmt.Sprintf(" (default: %v)", item.DefaultVal)
 			}
 

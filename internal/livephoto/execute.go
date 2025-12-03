@@ -1,7 +1,6 @@
 package livephoto
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
@@ -153,23 +152,6 @@ func parseFlags() *cliFlags {
 	return flags
 }
 
-func confirmAction(message string) bool {
-	reader := bufio.NewReader(os.Stdin)
-	if message != "" {
-		fmt.Print(message)
-	}
-	response, err := reader.ReadString('\n')
-	if err != nil {
-		return false
-	}
-	response = strings.TrimSpace(strings.ToLower(response))
-	// Default to yes if empty (just pressed Enter)
-	if response == "" {
-		return true
-	}
-	return response == "y" || response == "yes"
-}
-
 func Execute() {
 	flags := parseFlags()
 	rootPath := flags.path
@@ -232,11 +214,10 @@ func Execute() {
 			fmt.Printf("Empty directories to remove: %d\n", dirCount)
 		}
 		fmt.Printf("\n⚠️  WARNING: This will move files and may remove empty directories!\n")
-		if !confirmAction("Do you want to continue? (Y/n): ") {
+		if !utils.ConfirmAction("Do you want to continue? (Y/n): ", true) {
 			fmt.Println("Operation cancelled.")
 			return
 		}
-		fmt.Println()
 	}
 
 	// Second pass: perform the actual operations
