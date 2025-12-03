@@ -1,6 +1,6 @@
 ![Logo](https://www.dropbox.com/scl/fi/3jf52ewmmzejc6cneum81/go-cli.jpeg?rlkey=54pm45ym5el4wxp228uyt46bn&st=jyxmy80l&raw=1)
 
-**Some CLI utilities are written in Go**
+**Some clis tools make your life more comfortable 🦖**
 
 # new
 
@@ -168,3 +168,35 @@ livephoto
 - `-p, --path`: Path to the directory to clean up (default: current directory)
 - `-k, --keepEmptyDirs`: Keep empty directories after moving files (default: false)
 - `-n, --livephotosName`: Name of the live photos directory (default: "Live Photos")
+
+# gitclean
+
+`gitclean` - Clean up git branches that are no longer needed.
+
+### Installation
+
+```sh
+go install github.com/dynonguyen/dyno-clis/cmd/gitclean@latest
+```
+
+### Usage
+
+```sh
+# Clean up git branches with default settings
+gitclean
+
+# Exclude branches "branch1" and "branch2" and keep branches that match the regex pattern "^release.*$"
+gitclean -e "branch1,branch2" -r "^release.*$"
+
+# Clean up git branches and keep branches that have not been merged
+gitclean -k "origin/main"
+```
+
+### Options
+
+- `-e, --excludes`: Exclude branches from deletion (default: "main,master,production,prod")
+- `-y, --yes`: Automatically answer yes to all prompts (default: false)
+- `-f, --fetchPrune`: Run git fetch --prune --all before cleaning (default: true)
+- `-k, --keepNoMergedBranches`: Keep branches that have not been merged (default: "origin/master")
+- `-r, --keepRegex`: Keep branches that match the regex pattern (default: "")
+- `-h`: Show help for the command
