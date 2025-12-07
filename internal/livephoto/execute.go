@@ -205,7 +205,7 @@ func Execute() {
 
 	// Show summary and ask for confirmation
 	if !flags.yes {
-		fmt.Printf("\n=== Summary ===\n")
+		fmt.Printf("\n--- Summary ---\n")
 		fmt.Printf("Root path: %s\n", rootPath)
 		fmt.Printf("Live Photos directory: %s\n", livephotosDir)
 		fmt.Printf("Video files to move: %d\n", videoCount)

@@ -15,6 +15,7 @@ type FlagItem struct {
 	IntVal      *int
 	SliceStrVal []string
 	DefaultVal  any
+	Example     string
 }
 
 func (fi *FlagItem) parseFlag() {
@@ -53,7 +54,16 @@ func ParseFlags(items []FlagItem, example string) {
 		for _, item := range items {
 			keys := make([]string, len(item.Flags))
 			for i, f := range item.Flags {
-				keys[i] = "-" + f
+				if len(f) == 1 {
+					keys[i] = "-" + f
+				} else {
+					keys[i] = "--" + f
+				}
+			}
+
+			flagExample := ""
+			if item.Example != "" {
+				flagExample = fmt.Sprintf(" (example: %s)", item.Example)
 			}
 
 			defaultVal := ""
@@ -66,7 +76,7 @@ func ParseFlags(items []FlagItem, example string) {
 				required = " (required)"
 			}
 
-			fmt.Printf("  %s: %s%s%s\n", strings.Join(keys, ", "), item.Desc, defaultVal, required)
+			fmt.Printf("  %s: %s%s%s%s\n", strings.Join(keys, ", "), item.Desc, defaultVal, required, flagExample)
 		}
 
 		if example != "" {
