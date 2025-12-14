@@ -200,3 +200,138 @@ gitclean -k "origin/main"
 - `-k, --keepNoMergedBranches`: Keep branches that have not been merged (default: "origin/master")
 - `-r, --keepRegex`: Keep branches that match the regex pattern (default: "")
 - `-h`: Show help for the command
+
+# renamer
+
+`renamer` - Rename files in a directory with a given prefix, suffix, separator, created date, resolution, include, exclude, replace, and override.
+
+### Installation
+
+```sh
+go install github.com/dynonguyen/dyno-clis/cmd/renamer@latest
+```
+
+### Usage
+
+```sh
+renamer -p /path/to/directory
+
+# OR use current directory
+renamer
+```
+
+### Options
+
+- `-p, --path`: Path to the directory to rename files in, empty to use current directory (default: current directory)
+- `--prefix`: Prefix to add to the file name
+- `--suffix`: Suffix to add to the file name
+- `--override`: Override the file name with the given name, empty to keep the original name
+- `--separator`: Separator to use between the prefix, suffix and the original file name (default: "\_")
+- `--allow-dir`: Allow renaming directories (default: false)
+- `--created-date`: Add created date to the file name with the given format (example: YYYY-MM-DD or suffixYYYY-MM-DD)
+- `--detect-resolution`: Auto detect resolution and add to the file name, only for photo & video files (example: prefix or suffix)
+- `--include`: Only rename files that match the given regex
+- `--exclude`: Exclude files that match the given regex
+- `--replace`: Replace the given string or regex with the given replacement, format: old=new
+- `--dry-run`: Display the files that will be renamed without actually renaming them (default: false)
+- `-y, --yes`: Skip confirmation prompt and automatically proceed with renaming (default: false)
+
+### Examples
+
+**Add prefix to all files:**
+
+```sh
+renamer --prefix "IMG"
+# Renames: photo.jpg → IMG_photo.jpg
+```
+
+**Add suffix to all files:**
+
+```sh
+renamer --suffix "backup"
+# Renames: document.pdf → document_backup.pdf
+```
+
+**Use custom separator:**
+
+```sh
+renamer --prefix "2024" --separator "-"
+# Renames: file.txt → 2024-file.txt
+```
+
+**Add created date to file names:**
+
+```sh
+renamer --created-date "YYYY-MM-DD"
+# Renames: photo.jpg → 2024-01-15_photo.jpg
+
+renamer --created-date "suffixYYYY-MM-DD"
+# Renames: photo.jpg → photo_2024-01-15.jpg
+```
+
+**Auto detect and add resolution (requires ffprobe):**
+
+```sh
+renamer --detect-resolution "prefix"
+# Renames: photo.jpg → 1920x1080_16x9_photo.jpg
+
+renamer --detect-resolution "suffix"
+# Renames: video.mp4 → video_1920x1080_16x9.mp4
+```
+
+**Rename only specific files with regex:**
+
+```sh
+renamer --include "\.(jpg|png)$"
+# Only renames .jpg and .png files
+
+renamer --exclude "backup"
+# Excludes files containing "backup" in the name
+```
+
+**Replace text in file names:**
+
+```sh
+renamer --replace "old=new"
+# Renames: oldfile.txt → newfile.txt
+
+renamer --replace "IMG_(\d+)=Photo-$1"
+# Renames: IMG_001.jpg → Photo-001.jpg (using regex)
+```
+
+**Override file names:**
+
+```sh
+renamer --override "renamed"
+# Renames all files to: renamed.jpg, renamed.pdf, etc.
+# (duplicate names will have random suffix added)
+```
+
+**Dry run to preview changes:**
+
+```sh
+renamer --prefix "NEW" --dry-run
+# Shows what would be renamed without actually renaming
+```
+
+**Skip confirmation prompt:**
+
+```sh
+renamer --prefix "IMG" --yes
+# Automatically proceeds without asking for confirmation
+```
+
+**Rename directories:**
+
+```sh
+renamer --prefix "folder" --allow-dir
+# Also renames directories, not just files
+```
+
+**Combine multiple options:**
+
+```sh
+renamer --prefix "2024" --created-date "YYYY-MM-DD" --detect-resolution "suffix" --include "\.(jpg|mp4)$"
+# Adds prefix, created date, and resolution to jpg and mp4 files only
+# Example: photo.jpg → 2024_2024-01-15_photo_1920x1080_16x9.jpg
+```

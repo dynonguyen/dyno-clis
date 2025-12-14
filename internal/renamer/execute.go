@@ -14,7 +14,7 @@ import (
 
 const (
 	cliName    = "renamer"
-	suffixFlag = "s_"
+	suffixFlag = "suffix"
 )
 
 type cliFlags struct {
@@ -93,10 +93,11 @@ func parseFlags() *cliFlags {
 			StrVal:  &flags.createdDate,
 		},
 		{
-			Name:   "detect resolution",
-			Desc:   "Auto detect resolution and add to the file name, only for photo & video files",
-			Flags:  []string{"detect-resolution"},
-			StrVal: &flags.detectResolution,
+			Name:    "detect resolution",
+			Desc:    "Auto detect resolution and add to the file name, only for photo & video files",
+			Flags:   []string{"detect-resolution"},
+			Example: "prefix or suffix",
+			StrVal:  &flags.detectResolution,
 		},
 		{
 			Name:   "include",
@@ -121,6 +122,12 @@ func parseFlags() *cliFlags {
 			Desc:    "Display the files that will be renamed without actually renaming them",
 			Flags:   []string{"dry-run"},
 			BoolVal: &flags.dryRun,
+		},
+		{
+			Name:    "yes",
+			Desc:    "Skip confirmation prompt and automatically proceed with renaming",
+			Flags:   []string{"y", "yes"},
+			BoolVal: &flags.yes,
 		},
 	}
 
@@ -212,6 +219,25 @@ func getRenamedName(f os.DirEntry, opts *cliFlags, replacer *replacer) (ignored 
 		}
 	}
 
+	if opts.detectResolution != "" {
+		w, h := getResolution(f, opts.path)
+		if w > 0 && h > 0 {
+			resolution := fmt.Sprintf("%dx%d", w, h)
+
+			wr, hr := getRatio(w, h)
+			// If the ratio is not 1:1, add the ratio to the resolution
+			if w != wr || h != hr {
+				resolution = withSeparator(resolution, fmt.Sprintf("%dx%d", wr, hr))
+			}
+
+			if opts.detectResolution == suffixFlag {
+				nameWoutExt = withSeparator(nameWoutExt, resolution)
+			} else {
+				nameWoutExt = withSeparator(resolution, nameWoutExt)
+			}
+		}
+	}
+
 	if opts.prefix != "" {
 		nameWoutExt = withSeparator(opts.prefix, nameWoutExt)
 	}
@@ -244,6 +270,11 @@ func getReplaceRegex(replace string) (*replacer, error) {
 
 func Execute() {
 	flags := parseFlags()
+
+	if flags.detectResolution != "" && !isHasFFProbe() {
+		fmt.Println("detect resolution flag is set, but ffprobe is not installed. Please install it to use this feature")
+		os.Exit(1)
+	}
 
 	path := flags.path
 	if path == "" {
