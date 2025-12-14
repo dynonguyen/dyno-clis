@@ -13,3 +13,7 @@ build-livephoto:
 build-gitclean:
 	@go build -o ./build/gitclean ./cmd/gitclean/main.go
 	@cp ./build/gitclean "$(GO_PATH)/bin"
+
+build-renamer:
+	@go build -o ./build/renamer ./cmd/renamer/main.go
+	@cp ./build/renamer "$(GO_PATH)/bin"
