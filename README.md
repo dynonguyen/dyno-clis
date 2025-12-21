@@ -225,7 +225,7 @@ renamer
 - `-p, --path`: Path to the directory to rename files in, empty to use current directory (default: current directory)
 - `--prefix`: Prefix to add to the file name
 - `--suffix`: Suffix to add to the file name
-- `--override`: Override the file name with the given name, empty to keep the original name
+- `--override`: Override the file name with the given name, empty to keep the original name (use "<empty>" to remove the original name)
 - `--separator`: Separator to use between the prefix, suffix and the original file name (default: "\_")
 - `--allow-dir`: Allow renaming directories (default: false)
 - `--created-date`: Add created date to the file name with the given format (example: YYYY-MM-DD or suffixYYYY-MM-DD)
@@ -233,6 +233,7 @@ renamer
 - `--include`: Only rename files that match the given regex
 - `--exclude`: Exclude files that match the given regex
 - `--replace`: Replace the given string or regex with the given replacement, format: old=new
+- `--unique-suffix`: Add a unique suffix to the file name to avoid duplicate file names
 - `--dry-run`: Display the files that will be renamed without actually renaming them (default: false)
 - `-y, --yes`: Skip confirmation prompt and automatically proceed with renaming (default: false)
 

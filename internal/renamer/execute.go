@@ -13,14 +13,16 @@ import (
 )
 
 const (
-	cliName    = "renamer"
-	suffixFlag = "suffix"
+	cliName           = "renamer"
+	suffixFlag        = "suffix"
+	emptyOverrideFlag = "<empty>"
 )
 
 type cliFlags struct {
 	yes, allowDir, dryRun bool
 	path, prefix, suffix, override, separator,
 	include, exclude, detectResolution, createdDate, replace string
+	uniqueSuffix bool
 }
 
 type replacer struct {
@@ -42,6 +44,7 @@ var defaultFlags = cliFlags{
 	yes:              false,
 	allowDir:         false,
 	dryRun:           false,
+	uniqueSuffix:     false,
 }
 
 func parseFlags() *cliFlags {
@@ -116,6 +119,12 @@ func parseFlags() *cliFlags {
 			Desc:   "Replace the given string or regex with the given replacement, format: old=new",
 			Flags:  []string{"replace"},
 			StrVal: &flags.replace,
+		},
+		{
+			Name:    "unique suffix",
+			Desc:    "Add a unique suffix to the file name to avoid duplicate file names",
+			Flags:   []string{"unique-suffix"},
+			BoolVal: &flags.uniqueSuffix,
 		},
 		{
 			Name:    "dry run",
@@ -195,7 +204,12 @@ func getRenamedName(f os.DirEntry, opts *cliFlags, replacer *replacer) (ignored 
 	}
 
 	if opts.override != "" {
-		nameWoutExt = opts.override
+		shouldEmpty := opts.override == emptyOverrideFlag && (len(opts.prefix) > 0 || len(opts.suffix) > 0 || opts.uniqueSuffix)
+		if shouldEmpty {
+			nameWoutExt = ""
+		} else {
+			nameWoutExt = opts.override
+		}
 	} else if replacer != nil {
 		nameWoutExt = replacer.regex.ReplaceAllString(nameWoutExt, replacer.replacement)
 	}
@@ -237,6 +251,10 @@ func getRenamedName(f os.DirEntry, opts *cliFlags, replacer *replacer) (ignored 
 
 	if opts.suffix != "" {
 		nameWoutExt = withSeparator(nameWoutExt, opts.suffix)
+	}
+
+	if opts.uniqueSuffix {
+		nameWoutExt = withSeparator(nameWoutExt, utils.GenUniqueStr())
 	}
 
 	newName = nameWoutExt + ext
@@ -299,13 +317,10 @@ func Execute() {
 		}
 
 		// Avoid duplicate file names by adding a unique string
-		for {
-			if _, exists := renamed[newName]; !exists {
-				break
-			}
+		if _, exists := renamed[newName]; exists {
 			ext := filepath.Ext(newName)
 			nameWoutExt := strings.TrimSuffix(newName, ext)
-			newName = fmt.Sprintf("%s%s%s%s", nameWoutExt, flags.separator, utils.RandomString(8), ext)
+			newName = fmt.Sprintf("%s%s%s%s", nameWoutExt, flags.separator, utils.GenUniqueStr(), ext)
 		}
 
 		renamed[newName] = item.Name()

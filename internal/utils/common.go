@@ -1,17 +1,7 @@
 package utils
 
-import (
-	"crypto/rand"
-)
+import "github.com/rs/xid"
 
-const charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-func RandomString(n int) string {
-	b := make([]byte, n)
-	rand.Read(b)
-	charsetLen := len(charset)
-	for i := range b {
-		b[i] = charset[int(b[i])%charsetLen]
-	}
-	return string(b)
+func GenUniqueStr() string {
+	return xid.New().String()
 }
