@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -279,6 +280,75 @@ func getReplaceRegex(replace string) (*replacer, error) {
 	return &replacer{regex: regex, replacement: parts[1]}, nil
 }
 
+func processRename(path string, flags *cliFlags, replacer *replacer) map[string]string {
+	fmt.Println("Processing...")
+
+	items := getItemInDir(path)
+	renamed := make(map[string]string, len(items))
+	shouldSyncProcess := flags.detectResolution == ""
+
+	if shouldSyncProcess {
+		for _, item := range items {
+			if !flags.allowDir && item.IsDir() {
+				continue
+			}
+
+			ignored, newName := getRenamedName(item, flags, replacer)
+			if ignored {
+				continue
+			}
+
+			// Avoid duplicate file names by adding a unique string
+			if _, exists := renamed[newName]; exists {
+				ext := filepath.Ext(newName)
+				nameWoutExt := strings.TrimSuffix(newName, ext)
+				newName = fmt.Sprintf("%s%s%s%s", nameWoutExt, flags.separator, utils.GenUniqueStr(), ext)
+			}
+
+			renamed[newName] = item.Name()
+		}
+		return renamed
+	}
+
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	const maxWorkers = 100
+	semaphore := make(chan struct{}, maxWorkers)
+
+	for _, item := range items {
+		if !flags.allowDir && item.IsDir() {
+			continue
+		}
+
+		wg.Add(1)
+		go func(item os.DirEntry) {
+			defer wg.Done()
+
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
+			ignored, newName := getRenamedName(item, flags, replacer)
+			if ignored {
+				return
+			}
+
+			// Avoid duplicate file names by adding a unique string
+			mu.Lock()
+			if _, exists := renamed[newName]; exists {
+				ext := filepath.Ext(newName)
+				nameWoutExt := strings.TrimSuffix(newName, ext)
+				newName = fmt.Sprintf("%s%s%s%s", nameWoutExt, flags.separator, utils.GenUniqueStr(), ext)
+			}
+			renamed[newName] = item.Name()
+			mu.Unlock()
+		}(item)
+	}
+	wg.Wait()
+
+	return renamed
+}
+
 func Execute() {
 	flags := parseFlags()
 
@@ -297,34 +367,13 @@ func Execute() {
 		path = currentPath
 	}
 
-	items := getItemInDir(path)
-	renamed := map[string]string{}
-
 	replacer, err := getReplaceRegex(flags.replace)
 	if err != nil {
 		fmt.Println("Failed to get replace regex", err)
 		os.Exit(1)
 	}
 
-	for _, item := range items {
-		if !flags.allowDir && item.IsDir() {
-			continue
-		}
-
-		ignored, newName := getRenamedName(item, flags, replacer)
-		if ignored {
-			continue
-		}
-
-		// Avoid duplicate file names by adding a unique string
-		if _, exists := renamed[newName]; exists {
-			ext := filepath.Ext(newName)
-			nameWoutExt := strings.TrimSuffix(newName, ext)
-			newName = fmt.Sprintf("%s%s%s%s", nameWoutExt, flags.separator, utils.GenUniqueStr(), ext)
-		}
-
-		renamed[newName] = item.Name()
-	}
+	renamed := processRename(path, flags, replacer)
 
 	if len(renamed) == 0 {
 		fmt.Println("No files to rename!")
